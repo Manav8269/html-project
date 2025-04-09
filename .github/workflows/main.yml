@@ -9,10 +9,5 @@ jobs:
       - name: Show Notice (echo)
         run: echo "::notice title=Hello World::🎉 This is a test notice!"
 
-      - name: Show Notice (core)
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const core = require('@actions/core');
-            core.notice('🎉 GitHub Script Notice Works!', { title: 'Success Notice' });
+      - name: Show Error (echo)
+        run: echo "::error title=Oops Something Went Wrong::🚨 This is a test error popup!"
