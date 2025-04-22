@@ -3,27 +3,37 @@ name: Deploy Static HTML to EC2
 on:
   push:
     branches:
-      - main
+      - main  # This will trigger the action when changes are pushed to the main branch.
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      # Step 1: Checkout the repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Set up SSH key
       - name: Set up SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > key.pem
           chmod 600 key.pem
 
-      - name: Create /var/www/html if not exists
+      # Step 3: Create target directory on EC2 if not exists
+      - name: Create /var/www/html directory on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-          "sudo mkdir -p /var/www/html && sudo chown -R \$(whoami):\$(whoami) /var/www/html"
+            "sudo mkdir -p /var/www/html && sudo chown -R \$(whoami):\$(whoami) /var/www/html"
 
+      # Step 4: Deploy files to EC2 using rsync
       - name: Deploy HTML files to EC2
         run: |
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i key.pem" ./ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/
+          
+      # Optional: Restart Apache/Nginx if you want to ensure the server serves updated content
+      - name: Restart Apache/Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "sudo systemctl restart apache2"  # Or "sudo systemctl restart nginx" depending on what you're using.
