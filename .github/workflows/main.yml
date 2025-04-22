@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy Static HTML to EC2
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 
 jobs:
   deploy:
-    name: Deploy App to EC2
     runs-on: ubuntu-latest
 
     steps:
@@ -19,12 +18,7 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > key.pem
           chmod 600 key.pem
 
-      - name: Deploy to EC2
+      - name: Copy files to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/${{ secrets.EC2_USER }}/your-app-folder
-            git pull origin main
-            # Optional: Build/start your app
-            # npm install && npm run build
-            # pm2 restart your-app
-          EOF
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i key.pem" ./ \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/
