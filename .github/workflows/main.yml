@@ -18,7 +18,12 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > key.pem
           chmod 600 key.pem
 
-      - name: Copy files to EC2
+      - name: Create /var/www/html if not exists
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+          "sudo mkdir -p /var/www/html && sudo chown -R \$(whoami):\$(whoami) /var/www/html"
+
+      - name: Deploy HTML files to EC2
         run: |
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i key.pem" ./ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/
