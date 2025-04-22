@@ -3,7 +3,7 @@ name: Deploy Static HTML to EC2
 on:
   push:
     branches:
-      - main  # This will trigger the action when changes are pushed to the main branch.
+      - main
 
 jobs:
   deploy:
@@ -31,9 +31,9 @@ jobs:
         run: |
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i key.pem" ./ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/
-          
-      # Optional: Restart Apache/Nginx if you want to ensure the server serves updated content
-      - name: Restart Apache/Nginx
+
+      # Step 5: Restart Apache (or Nginx)
+      - name: Restart Apache (or Nginx)
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "sudo systemctl restart apache2"  # Or "sudo systemctl restart nginx" depending on what you're using.
+            "sudo systemctl restart httpd"  # or "sudo systemctl restart nginx"
