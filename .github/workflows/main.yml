@@ -3,11 +3,11 @@ name: Deploy Static HTML to EC2
 on:
   push:
     branches:
-      - main
+      - main  # Trigger the deployment when pushing changes to the main branch.
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner for this workflow.
 
     steps:
       # Step 1: Checkout the repository
@@ -18,9 +18,9 @@ jobs:
       - name: Set up SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > key.pem
-          chmod 600 key.pem
+          chmod 600 key.pem  # Ensure key permissions are set correctly
 
-      # Step 3: Create target directory on EC2 if not exists
+      # Step 3: Create target directory on EC2 if it doesn't exist
       - name: Create /var/www/html directory on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
@@ -32,8 +32,8 @@ jobs:
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i key.pem" ./ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/
 
-      # Step 5: Restart Apache (or Nginx)
-      - name: Restart Apache (or Nginx)
+      # Step 5: Restart Apache (httpd) to apply changes
+      - name: Restart Apache (httpd)
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "sudo systemctl restart httpd"  # or "sudo systemctl restart nginx"
+            "sudo systemctl restart httpd"  # Restart Apache web server
