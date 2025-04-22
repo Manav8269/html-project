@@ -1,13 +1,58 @@
-name: Test Popup
+# This workflow will deploy your application to an EC2 instance
+# File path: .github/workflows/deploy-to-ec2.yml
 
-on: [push]
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]  # Adjust branch name as needed
 
 jobs:
-  notify:
+  deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Show Notice (echo)
-        run: echo "::notice title=Hello World::🎉 This is a test notice!"
-
-      - name: Show Error (echo)
-        run: echo "::error title=Oops Something Went Wrong::🚨 This is a test error popup!"
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+        
+    - name: Add EC2 host to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Build application
+      run: |
+        # Add your build commands here, for example:
+        # npm install
+        # npm run build
+        echo "Building application..."
+        
+    - name: Deploy to EC2
+      run: |
+        # Deploy your application to EC2
+        # Example using rsync:
+        rsync -avz --delete \
+          --exclude '.git/' \
+          --exclude '.github/' \
+          --exclude 'node_modules/' \
+          ./ ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/app/
+        
+        # Execute remote commands if needed
+        ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd ~/app
+          # Add commands to restart your application
+          # Example: pm2 restart app.js
+          echo "Deployed successfully"
+        EOF
